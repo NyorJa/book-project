@@ -23,7 +23,6 @@ import com.karankumar.bookproject.backend.entity.BaseEntity;
 import com.karankumar.bookproject.backend.repository.AuthorRepository;
 import lombok.extern.java.Log;
 import org.springframework.stereotype.Service;
-import org.springframework.util.CollectionUtils;
 
 import java.util.List;
 import java.util.logging.Level;
@@ -51,19 +50,17 @@ public class AuthorService extends BaseService<Author, Long> {
     @Override
     public void save(Author author) {
         if (author != null) {
-            List<Author> existingAuthors = findAll();
-            List<Long> matchingAuthors = existingAuthors.stream()
+            List<Long> matchingAuthors = findAll().stream()
                 .map(BaseEntity::getId)
                 .filter(id -> id.equals(author.getId())).collect(Collectors.toList());
-            // Null checking will do since it will return 1 or null or empty result since ids are unique
-            if (!CollectionUtils.isEmpty(matchingAuthors)) {
+            if (matchingAuthors.size() == 1) {
                 // if an author with the same ID exists, set this incoming author ID to null so that
                 // a new row in the table is made rather than updating the row that has the same ID
                 LOGGER.log(Level.INFO, "Matching authorIds: " + matchingAuthors);
-                authorRepository.save(new Author(author.getFirstName(), author.getLastName()));
-            } else {
-                authorRepository.save(author);
+                author.removeId();
             }
+
+            authorRepository.save(author);
         }
     }
 
